@@ -30,7 +30,8 @@ func main() {
 	hostStatus := getHostStatus(trafficCtlStatus)
 	rawTMResponse := getStatusFromTrafficMonitor()
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
-	getTrafficMonitorStatus(hostStatus, tmStatus)
+	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
+	executeUpdateCommands(cmds)
 }
 
 func getHostStatus(trafficCtlStatus string) map[string]map[string]string {
@@ -73,7 +74,8 @@ func pollTrafficCtlStatus() string {
 	return string(out)
 }
 
-func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus map[string]map[string]string) {
+func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus map[string]map[string]string) []string {
+	var updateCmds []string
 	for hostname, hostdata := range tmStatus {
 		logger.Trace().Str("hostname", hostname).Str("hostdata", fmt.Sprint(hostdata)).Msg("processing host")
 		updateCmd := ""
@@ -99,14 +101,20 @@ func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus m
 					updateCmd = fmt.Sprintf("%s host down %s", trafficCtl, hostStatus[hostname]["fqdn"])
 				}
 			}
-			if updateCmd != "" {
-				logger.Debug().Str("hostname", hostname).Str("cmd", updateCmd).Msg("a command has been generated to modify host status")
-				out, err := exec.Command(updateCmd).Output()
-				fmt.Printf("%s %s", out, err)
-			}
+		}
+		if updateCmd != "" {
+			updateCmds = append(updateCmds, updateCmd)
 		}
 	}
-	return
+	return updateCmds
+}
+
+func executeUpdateCommands(cmds []string) {
+	for i, cmd := range cmds {
+		logger.Debug().Str("cmd", cmd).Msgf("invoking traffic_ctl (%d/%d)", i, len(cmds))
+		out, err := exec.Command(cmd).Output()
+		fmt.Printf("%s %s", out, err)
+	}
 }
 
 func getStatusFromTrafficMonitor() string {
