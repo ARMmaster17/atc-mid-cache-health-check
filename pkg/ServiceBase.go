@@ -3,57 +3,66 @@ package atc_mid_health_check
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ARMmaster17/mid-health-check/pkg/TrafficCtl"
+	"github.com/go-co-op/gocron"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os/exec"
 	"strings"
+	"time"
 )
 
 var (
-	cmd             string
-	trafficCtl      string
 	trafficMonitors []string
 	apiPath         string
 
 	LogLevel    zerolog.Level
 	LogLocation = "/var/log/mid-health-check/mhc.log"
 	Logger      zerolog.Logger
+
+	tcpCheckInterval = 2
+	tmCheckInterval = 10
+	toCheckInterval = 30
 )
 
 func StartServiceBase() {
 	initVars()
-	trafficCtlStatus := pollTrafficCtlStatus()
-	hostStatus := getHostStatus(trafficCtlStatus)
+	TrafficCtl.Init(Logger)
+	s := gocron.NewScheduler(time.UTC)
+	s.Every(1).Minutes().Do(HostListUpdate) // Reload list of mids
+	s.Every(tcpCheckInterval).Seconds().Do(nil /*TCP Check*/)
+	s.Every(tmCheckInterval).Seconds().Do(nil /*TM Check*/)
+	s.Every(toCheckInterval).Seconds().Do(nil /*TO Check*/)
+
+	// Seed the list of mids before starting.
+	HostListUpdate()
+	if hostStatus == nil {
+		Logger.Fatal().Msg("unable to seed mid list")
+	}
+	s.StartAsync()
+
+	///////////// Old main
+	trafficCtlStatus, err := pollTrafficCtlStatus()
+	if err != nil {
+		// FATAL: Not handled here.
+		return
+	}
 	rawTMResponse := getStatusFromTrafficMonitor()
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
 	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
-	executeUpdateCommands(cmds)
+	for i, cmd := range cmds {
+		Logger.Trace().Msgf("updating host status (%d/%d)", i + 1, len(cmds))
+		TrafficCtl.ExecuteCommand(cmd, true)
+	}
 }
 
 func initVars() {
 	LogLevel = zerolog.Level(viper.GetInt("LOG_LEVEL"))
-	trafficCtl = viper.GetString("TRAFFIC_CTL_DIR")
-	cmd = fmt.Sprintf("%s/bin/traffic_ctl metric match host_status", trafficCtl)
 	trafficMonitors = strings.Split(viper.GetString("TM_HOSTS"), ",")
 	apiPath = viper.GetString("TM_API_PATH")
-}
-
-func getHostStatus(trafficCtlStatus string) map[string]map[string]string {
-	var hostStatus = map[string]map[string]string{}
-	for i, line := range strings.Split(trafficCtlStatus, "\n") {
-		Logger.Trace().Str("line", line).Msgf("processing line %d from traffic_ctl output", i)
-		tmpLine := strings.Split(line, " ")
-		fqdn := strings.Replace(tmpLine[0], "proxy.process.host_status.", "", -1)
-		Logger.Debug().Str("line", line).Str("fqdn", fqdn).Msg("got FQDN from traffic_ctl output")
-		hostname := strings.Split(fqdn, ".")[0]
-		Logger.Debug().Str("line", line).Str("hostname", hostname).Msg("got FQDN from traffic_ctl output")
-		hostStatus[hostname] = buildHostStatusStruct(fqdn, tmpLine[1])
-	}
-	return hostStatus
 }
 
 func buildHostStatusStruct(fqdn string, statusLine string) map[string]string {
@@ -73,13 +82,8 @@ func buildHostStatusStruct(fqdn string, statusLine string) map[string]string {
 	return statusStruct
 }
 
-func pollTrafficCtlStatus() string {
-	Logger.Trace().Str("cmd", cmd).Msg("executing traffic_ctl")
-	out, err := exec.Command(cmd).Output()
-	if err != nil {
-		Logger.Fatal().Err(err).Stack().Caller().Str("cmd", cmd).Msg("unable to execute traffic_ctl")
-	}
-	return string(out)
+func pollTrafficCtlStatus() (string, error) {
+	return TrafficCtl.ExecuteCommand("metric match host_status", false)
 }
 
 func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus map[string]map[string]string) []string {
@@ -99,14 +103,14 @@ func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus m
 				status := "UP"
 				if hostStatus[hostname]["MANUAL"] != status {
 					log.Info().Str("hostname", hostname).Msgf("%s: Traffic Monitor reports UP, Manual override is %s, Host Status is %s\n", hostname, hostStatus[hostname]["MANUAL"], hostStatus[hostname]["STATUS"])
-					updateCmd = fmt.Sprintf("%s host up %s", trafficCtl, hostStatus[hostname]["fqdn"])
+					updateCmd = fmt.Sprintf("host up %s", hostStatus[hostname]["fqdn"])
 				}
 			} else {
 				status := "DOWN"
 				Logger.Trace().Str("hostname", hostname).Msg("host is not available")
 				if hostStatus[hostname]["MANUAL"] != status {
 					log.Info().Str("hostname", hostname).Msgf("%s: Traffic Monitor reports DOWN, Manual override is %s, Host Status is %s\n", hostname, hostStatus[hostname]["MANUAL"], hostStatus[hostname]["STATUS"])
-					updateCmd = fmt.Sprintf("%s host down %s", trafficCtl, hostStatus[hostname]["fqdn"])
+					updateCmd = fmt.Sprintf("host down %s", hostStatus[hostname]["fqdn"])
 				}
 			}
 		}
@@ -115,14 +119,6 @@ func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus m
 		}
 	}
 	return updateCmds
-}
-
-func executeUpdateCommands(cmds []string) {
-	for i, cmd := range cmds {
-		Logger.Debug().Str("cmd", cmd).Msgf("invoking traffic_ctl (%d/%d)", i, len(cmds))
-		out, err := exec.Command(cmd).Output()
-		fmt.Printf("%s %s", out, err)
-	}
 }
 
 func getStatusFromTrafficMonitor() string {
