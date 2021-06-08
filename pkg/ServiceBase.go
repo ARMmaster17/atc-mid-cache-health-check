@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,23 +14,32 @@ import (
 )
 
 var (
-	cmd             = "/opt/trafficserver/bin/traffic_ctl metric match host_status"
-	trafficCtl      = "/opt/trafficserver"
-	trafficMonitors = [...]string{"tm.example.com"}
-	apiPath         = "/api/cache-statuses"
+	cmd             string
+	trafficCtl      string
+	trafficMonitors []string
+	apiPath         string
 
-	LogLevel    = zerolog.InfoLevel
+	LogLevel    zerolog.Level
 	LogLocation = "/var/log/mid-health-check/mhc.log"
 	Logger      zerolog.Logger
 )
 
 func StartServiceBase() {
+	initVars()
 	trafficCtlStatus := pollTrafficCtlStatus()
 	hostStatus := getHostStatus(trafficCtlStatus)
 	rawTMResponse := getStatusFromTrafficMonitor()
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
 	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
 	executeUpdateCommands(cmds)
+}
+
+func initVars() {
+	LogLevel = zerolog.Level(viper.GetInt("LOG_LEVEL"))
+	trafficCtl = viper.GetString("TRAFFIC_CTL_DIR")
+	cmd = fmt.Sprintf("%s/bin/traffic_ctl metric match host_status", trafficCtl)
+	trafficMonitors = strings.Split(viper.GetString("TM_HOSTS"), ",")
+	apiPath = viper.GetString("TM_API_PATH")
 }
 
 func getHostStatus(trafficCtlStatus string) map[string]map[string]string {
