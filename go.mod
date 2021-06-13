@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-co-op/gocron v1.6.0
+	github.com/go-co-op/gocron v1.6.2
 	github.com/hexdigest/gounit v0.0.0-20180817093830-f1874d3307cb // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
