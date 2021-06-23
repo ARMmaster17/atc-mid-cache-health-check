@@ -28,14 +28,15 @@ var (
 	toCheckInterval = 30
 )
 
+// StartServiceBase Entry point for ServiceBase. Manages all three check services and hostList updates.
 func StartServiceBase() {
 	initVars()
 	TrafficCtl.Init(Logger)
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Minutes().Do(HostListUpdate) // Reload list of mids
-	s.Every(tcpCheckInterval).Seconds().Do(nil /*TCP Check*/)
-	s.Every(tmCheckInterval).Seconds().Do(nil /*TM Check*/)
-	s.Every(toCheckInterval).Seconds().Do(nil /*TO Check*/)
+	s.Every(tcpCheckInterval).Seconds().Do(nil /*TCP Check*/) // Ignore for now
+	s.Every(tmCheckInterval).Seconds().Do(nil /*TM Check*/) // TODO: X
+	s.Every(toCheckInterval).Seconds().Do(nil /*TO Check*/) // TODO: X
 
 	// Seed the list of mids before starting.
 	HostListUpdate()
@@ -44,12 +45,9 @@ func StartServiceBase() {
 	}
 	s.StartAsync()
 
-	///////////// Old main
-	trafficCtlStatus, err := pollTrafficCtlStatus()
-	if err != nil {
-		// FATAL: Not handled here.
-		return
-	}
+	///////////////////////////////////
+	// OLD IMPLEMENTATION --- IGNORE //
+	///////////////////////////////////
 	rawTMResponse := getStatusFromTrafficMonitor()
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
 	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
@@ -59,6 +57,7 @@ func StartServiceBase() {
 	}
 }
 
+// initVars Loads variables from the environment. Currently performs no validation checks on variable contents.
 func initVars() {
 	LogLevel = zerolog.Level(viper.GetInt("LOG_LEVEL"))
 	trafficMonitors = strings.Split(viper.GetString("TM_HOSTS"), ",")

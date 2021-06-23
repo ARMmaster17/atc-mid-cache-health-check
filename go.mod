@@ -6,6 +6,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-co-op/gocron v1.6.0 // indirect
 	github.com/hexdigest/gounit v0.0.0-20180817093830-f1874d3307cb // indirect
+	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.2 // indirect

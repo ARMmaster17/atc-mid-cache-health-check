@@ -19,6 +19,13 @@ func Init(svcLogger zerolog.Logger) {
 }
 
 func ExecuteCommand(subCommand string, printOutput bool) (string, error) {
+	logger.Debug().Msg("obtaining lock on traffic_ctl executable...")
+	mu.Lock()
+	logger.Debug().Msg("lock obtained on traffic_ctl executable")
+	defer func() {
+		logger.Debug().Msg("removing lock on traffic_ctl executable")
+		mu.Unlock()
+	}()
 	if subCommand == "" {
 		return "", fmt.Errorf("empty command, nothing to run")
 	}
