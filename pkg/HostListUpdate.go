@@ -3,7 +3,7 @@ package atc_mid_health_check
 import "strings"
 
 var (
-	hostStatus map[string]map[string]string
+	hostStatus map[string]map[string]HostMid
 )
 
 func HostListUpdate() {

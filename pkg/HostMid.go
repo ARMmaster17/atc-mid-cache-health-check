@@ -6,4 +6,8 @@ type HostMid struct {
 	Available bool `json:"combined_available"`
 	Manual string `json:"MANUAL"`
 	FQDN string `json:"fqdn"`
+	Status string `json:"STATUS"`
+	Active string
+	Local string
+	SelfDetect string
 }

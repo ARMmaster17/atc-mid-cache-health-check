@@ -8,9 +8,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -30,8 +27,12 @@ var (
 
 // StartServiceBase Entry point for ServiceBase. Manages all three check services and hostList updates.
 func StartServiceBase() {
+	Logger.Debug().Msg("setting up")
+	Logger.Trace().Msg("initializing program data")
 	initVars()
+	Logger.Trace().Msg("initializing TrafficCtl module")
 	TrafficCtl.Init(Logger)
+	Logger.Trace().Msg("setting up scheduled API checks")
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Minutes().Do(HostListUpdate) // Reload list of mids
 	s.Every(tcpCheckInterval).Seconds().Do(nil /*TCP Check*/) // Ignore for now
@@ -39,10 +40,12 @@ func StartServiceBase() {
 	s.Every(toCheckInterval).Seconds().Do(nil /*TO Check*/) // TODO: X
 
 	// Seed the list of mids before starting.
+	Logger.Debug().Msg("getting list of hosts")
 	HostListUpdate()
 	if hostStatus == nil {
 		Logger.Fatal().Msg("unable to seed mid list")
 	}
+	Logger.Debug().Msg("starting checks")
 	s.StartAsync()
 
 	///////////////////////////////////
@@ -53,7 +56,11 @@ func StartServiceBase() {
 	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
 	for i, cmd := range cmds {
 		Logger.Trace().Msgf("updating host status (%d/%d)", i + 1, len(cmds))
-		TrafficCtl.ExecuteCommand(cmd, true)
+		_, err := TrafficCtl.ExecuteCommand(cmd, true)
+		if err != nil {
+			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i + 1, len(cmds))
+			return
+		}
 	}
 }
 
@@ -64,21 +71,24 @@ func initVars() {
 	apiPath = viper.GetString("TM_API_PATH")
 }
 
-func buildHostStatusStruct(fqdn string, statusLine string) map[string]string {
-	statusStruct := make(map[string]string)
-	statusStruct["fqdn"] = fqdn
-	for j, s := range strings.Split(statusLine, ",") {
-		Logger.Trace().Str("s", s).Str("tmp_line", statusLine).Msgf("processing substring #%d from traffic_ctl output", j)
-		sSplit := strings.Split(s, ":")
-		if len(sSplit) > 1 {
-			Logger.Trace().Str("s", s).Msg("split occurred")
-			statusStruct[sSplit[0]] = sSplit[1]
-		} else {
-			Logger.Trace().Str("s", s).Msg("split did not occur")
-			statusStruct["STATUS"] = strings.Split(sSplit[0], "_")[2]
-		}
+func buildHostStatusStruct(fqdn string, statusLine string) (HostMid, error) {
+	statusStruct := HostMid{}
+	statusStruct.FQDN = fqdn
+	var status string
+	var active string
+	var local string
+	var manual string
+	var selfDetect string
+	tokensFound, err := fmt.Sscanf(statusLine, "HOST_STATUS_%s,ACTIVE:%s:0:0,LOCAL:%s:0:0,MANUAL:%s:0:0,SELF_DETECT:%s:0:0", &status, &active, &local, &manual, &selfDetect)
+	if err != nil {
+		Logger.Error().Err(err).Str("line", statusLine).Str("fqdn", fqdn).Msg("unable to parse traffic_ctl output")
+		return HostMid{}, err
 	}
-	return statusStruct
+	if tokensFound < 5 {
+		Logger.Error().Str("line", statusLine).Str("fqdn", fqdn).Msgf("expected 5 tokens in traffic_ctl output, found %d", tokensFound)
+		return HostMid{}, fmt.Errorf("traffic_ctl output is missing HostMid data")
+	}
+	return statusStruct, nil
 }
 
 func pollTrafficCtlStatus() (string, error) {
@@ -118,25 +128,6 @@ func getTrafficMonitorStatus(hostStatus map[string]map[string]string, tmStatus m
 		}
 	}
 	return updateCmds
-}
-
-func getStatusFromTrafficMonitor() string {
-	Logger.Debug().Str("url", trafficMonitors[0]+apiPath).Msg("connecting to TM")
-	r, err := http.Get(trafficMonitors[0] + apiPath)
-	if err != nil {
-		Logger.Fatal().Err(err).Stack().Caller().Str("url", trafficMonitors[0]+apiPath).Msg("could not connect to TM")
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			Logger.Fatal().Err(err).Stack().Caller().Msg("unable to close connection with TM")
-		}
-	}(r.Body)
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		Logger.Fatal().Err(err).Stack().Caller().Msg("unable to read response from TM")
-	}
-	return string(body)
 }
 
 func parseTrafficMonitorStatus(response string) map[string]map[string]string {
