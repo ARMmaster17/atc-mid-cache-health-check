@@ -19,10 +19,6 @@ var (
 	LogLevel    zerolog.Level
 	LogLocation = "/var/log/mid-health-check/mhc.log"
 	Logger      zerolog.Logger
-
-	tcpCheckInterval = 2
-	tmCheckInterval = 10
-	toCheckInterval = 30
 )
 
 // StartServiceBase Entry point for ServiceBase. Manages all three check services and hostList updates.
@@ -32,12 +28,11 @@ func StartServiceBase() {
 	initVars()
 	Logger.Trace().Msg("initializing TrafficCtl module")
 	TrafficCtl.Init(Logger)
-	Logger.Trace().Msg("setting up scheduled API checks")
-	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Minutes().Do(HostListUpdate) // Reload list of mids
-	s.Every(tcpCheckInterval).Seconds().Do(nil /*TCP Check*/) // Ignore for now
-	s.Every(tmCheckInterval).Seconds().Do(nil /*TM Check*/) // TODO: X
-	s.Every(toCheckInterval).Seconds().Do(nil /*TO Check*/) // TODO: X
+	s, err := registerCronJobs()
+	if err != nil {
+		Logger.Fatal().Err(err).Msg("unable to register interval checks with go-cron")
+		return
+	}
 
 	// Seed the list of mids before starting.
 	Logger.Debug().Msg("getting list of hosts")
@@ -55,13 +50,37 @@ func StartServiceBase() {
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
 	cmds := getTrafficMonitorStatus(hostStatus, tmStatus)
 	for i, cmd := range cmds {
-		Logger.Trace().Msgf("updating host status (%d/%d)", i + 1, len(cmds))
+		Logger.Trace().Msgf("updating host status (%d/%d)", i+1, len(cmds))
 		_, err := TrafficCtl.ExecuteCommand(cmd, true)
 		if err != nil {
-			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i + 1, len(cmds))
+			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i+1, len(cmds))
 			return
 		}
 	}
+}
+
+// registerCronJobs Sets up interval jobs so that checks can be performed on a specific schedule. Resource locking
+// and job overrun protection is handled by gocron.
+func registerCronJobs() (*gocron.Scheduler, error) {
+	Logger.Trace().Msg("setting up scheduled API checks")
+	s := gocron.NewScheduler(time.UTC)
+	_, err := s.Every(1).Minutes().Do(HostListUpdate)  // Reload list of mids
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.Every(viper.GetInt("TCP_CHECK_INTERVAL")).Seconds().Do(nil /*TCP Check*/) // Ignore for now
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.Every(viper.GetInt("TM_CHECK_INTERVAL")).Seconds().Do(CheckTMService)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.Every(viper.GetInt("TO_CHECK_INTERVAL")).Seconds().Do(nil /*TO Check*/)   // TODO: X
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 // initVars Loads variables from the environment. Currently performs no validation checks on variable contents.

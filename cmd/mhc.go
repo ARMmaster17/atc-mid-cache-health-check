@@ -11,7 +11,7 @@ import (
 // main Entry point of the application. Handles core services before handing off to ServiceBase.
 func main() {
 	initLogger()
-	viper.SetEnvPrefix("MHC_")
+	viper.SetEnvPrefix("MHC")
 	viper.AutomaticEnv()
 	atc_mid_health_check.StartServiceBase()
 }

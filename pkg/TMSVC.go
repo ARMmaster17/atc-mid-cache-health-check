@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+func CheckTMService() {
+
+}
+
 func getStatusFromTrafficMonitor() string {
 	Logger.Debug().Str("url", trafficMonitors[0]+apiPath).Msg("connecting to TM")
 	r, err := http.Get(trafficMonitors[0] + apiPath)
