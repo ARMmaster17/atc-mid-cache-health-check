@@ -3,8 +3,8 @@ package atc_mid_health_check
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ARMmaster17/mid-health-check/pkg/TrafficCtl"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
 )
@@ -21,17 +21,9 @@ func CheckTMService() {
 	tmStatus := parseTrafficMonitorStatus(rawTMResponse)
 	filteredTmStatus := filterCachesByMidType(tmStatus)
 	cmds := checkForCacheStateChanges(filteredTmStatus)
-	for i, cmd := range cmds {
-		Logger.Trace().Msgf("updating host status (%d/%d)", i+1, len(cmds))
-		_, err := TrafficCtl.ExecuteCommand(cmd, true)
-		if err != nil {
-			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i+1, len(cmds))
-			return
-		}
-	}
+	updateMidsInTrafficCtl(cmds)
 }
 
-// TODO: Rename function.
 // getStatusFromTrafficMonitor Connects to Traffic Monitor and returns the JSON-formatted response body with the mid
 // cache status data.
 func getStatusFromTrafficMonitor() (string, error) {
@@ -79,7 +71,7 @@ func filterCachesByMidType(tmStatus map[string]map[string]string) map[string]map
 	Logger.Debug().Msg("filtering TM payload by MID status")
 	var filteredTmStatus = make(map[string]map[string]string)
 	Logger.Trace().Msg("obtaining lock on hostList")
-	hostList.Lock()
+	hostList.Lock(viper.GetInt("TM_CHECK_INTERVAL") / 2)
 	for hostname, hostdata := range tmStatus {
 		_, hostExists := hostList.Hosts[hostname]
 		if hostdata["type"] == "MID" && hostExists {
@@ -96,7 +88,7 @@ func filterCachesByMidType(tmStatus map[string]map[string]string) map[string]map
 // are prepared for all mids that have mis-matched data to be run with traffic_ctl.
 func checkForCacheStateChanges(tmStatus map[string]map[string]string) []string {
 	var updateCmds []string
-	hostList.Lock()
+	hostList.Lock(viper.GetInt("TM_CHECK_INTERVAL") / 2)
 	// Locking at the method level because in Golang defer cannot be used inside a for loop.
 	defer hostList.Unlock()
 	for hostname, hostdata := range tmStatus {

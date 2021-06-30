@@ -15,11 +15,11 @@ type HostList struct {
 
 // Lock Blocks current thread until exclusive access can be given to the referenced
 // HostList object. Only needed for manual writes to the Hosts field.
-func (hl *HostList) Lock() {
+func (hl *HostList) Lock(timeout int) {
 	if hl.mu == nil {
 		hl.mu = &sync.Mutex{}
 	}
-	hl.mu.Lock()
+	lockMutex(hl.mu, timeout)
 }
 
 // Unlock Returns exclusive access to the application for another thread to claim. Does
@@ -31,14 +31,14 @@ func (hl *HostList) Unlock() {
 // Refresh Gets a list of mid caches from the local instance of traffic_ctl. Stores the parsed
 // information in the referenced HostList object. Suppresses all errors to ensure that go-cron does not
 // stop sending scheduled jobs.
-func (hl *HostList) Refresh() {
+func (hl *HostList) Refresh(mutexTimeout int) {
 	trafficCtlOutput, err := pollTrafficCtlStatus()
 	if err != nil {
 		Logger.Error().Err(err).Msg("unable to poll TrafficCtl")
 		return
 	}
 	// Lock the array after we are sure we have data to work with from traffic_ctl.
-	hl.Lock()
+	hl.Lock(mutexTimeout)
 	defer hl.Unlock()
 	// Reset the array so no old servers get left behind.
 	hl.Hosts = map[string]HostMid{}
