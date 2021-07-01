@@ -46,9 +46,9 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 		}
 		updateCmd := ""
 		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
-			updateCmd = fmt.Sprintf("host down %s", server.FQDN)
+			updateCmd = fmt.Sprintf("host down %s", *server.FQDN)
 		} else if *server.Status == "ALL" && hostList.Hosts[*server.HostName].Manual != "UP" {
-			updateCmd = fmt.Sprintf("host up %s", server.FQDN)
+			updateCmd = fmt.Sprintf("host up %s", *server.FQDN)
 		}
 		if updateCmd != "" {
 			updateCmds = append(updateCmds, updateCmd)

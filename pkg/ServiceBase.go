@@ -1,7 +1,6 @@
 package atc_mid_health_check
 
 import (
-	"github.com/ARMmaster17/mid-health-check/pkg/TrafficCtl"
 	"github.com/go-co-op/gocron"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -30,7 +29,7 @@ func StartServiceBase() {
 	Logger.Trace().Msg("initializing program data")
 	initVars()
 	Logger.Trace().Msg("initializing TrafficCtl module")
-	TrafficCtl.Init(Logger)
+	Init(Logger)
 	s, err := registerCronJobs()
 	if err != nil {
 		Logger.Fatal().Err(err).Msg("unable to register interval checks with go-cron")
@@ -66,7 +65,7 @@ func registerCronJobs() (*gocron.Scheduler, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.Every(viper.GetInt("TO_CHECK_INTERVAL")).Seconds().Do(nil /*TO Check*/) // TODO: X
+	_, err = s.Every(viper.GetInt("TO_CHECK_INTERVAL")).Seconds().Do(CheckTOService)
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +81,13 @@ func initVars() {
 
 // pollTrafficCtlStatus Updates HostList with the latest mid cache data using traffic_ctl.
 func pollTrafficCtlStatus() (string, error) {
-	return TrafficCtl.ExecuteCommand("metric match host_status", false)
+	return ExecuteCommand("metric match host_status", false)
 }
 
 // lockMutex Common function for locking a mutex. Will display a trace message if the mutex is currently locked,
 // and will show an error if the wait exceeded the specified timeout.
 func lockMutex(mu *sync.Mutex, timeout int) {
-	state := reflect.ValueOf(&mu).Elem().FieldByName("state")
+	state := reflect.ValueOf(mu).Elem().FieldByName("state")
 	if state.Int()&mutexLocked == mutexLocked {
 		Logger.Trace().Msg("mutex is locked, waiting for exclusive access")
 	}
@@ -103,7 +102,7 @@ func lockMutex(mu *sync.Mutex, timeout int) {
 func updateMidsInTrafficCtl(updateCmds []string) {
 	for i, cmd := range updateCmds {
 		Logger.Trace().Msgf("updating host status (%d/%d)", i+1, len(updateCmds))
-		_, err := TrafficCtl.ExecuteCommand(cmd, true)
+		_, err := ExecuteCommand(cmd, true)
 		if err != nil {
 			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i+1, len(updateCmds))
 		}
