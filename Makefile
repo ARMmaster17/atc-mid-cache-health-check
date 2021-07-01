@@ -13,9 +13,8 @@ $(EXEC_FILE): test
 	go build $(SRC_FILE)
 
 test:
-	#go get -u github.com/jstemmer/go-junit-report
-	#go test -v -coverprofile=$(COVERAGE_REPORT) ./... 2>&1 | go-junit-report > $(JUNIT_REPORT)
-	go test ./...
+	go get -u github.com/jstemmer/go-junit-report
+	go test -v -coverprofile=$(COVERAGE_REPORT) ./... 2>&1 | go-junit-report > $(JUNIT_REPORT)
 
 clean:
 	rm -f $(RPM)
