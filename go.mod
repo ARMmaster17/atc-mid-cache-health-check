@@ -1,4 +1,4 @@
-module github.com/ARMmaster17/atc-mid-health-check
+module atc-mid-health-check
 
 go 1.16
 
