@@ -28,6 +28,7 @@ jobs:
         env:
           CC_TEST_REPORTER_ID: 8200b4a72cd17cd2ac8336dc82e9f132e6faa79215fe43a547c87d1674ad8e74
         with:
+          prefix: atc-mid-health-check
           coverageLocations: ${{github.workspace}}/cover.out:gocov
 
       - name: Publish unit test results
