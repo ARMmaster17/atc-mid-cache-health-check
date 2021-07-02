@@ -28,7 +28,7 @@ test:
 
 clean:
 	rm -f ~/rpmbuild/RPMS/x86_64/$(RPM) || true
-	rm -f ./$(RPM) || true
+	rm -f ./artifacts/$(RPM) || true
 	rm -f ./$(EXEC_FILE) || true
 	rm -f ./$(TAR) || true
 	rm -f ~/rpmbuild/SOURCES/$(TAR) || true
@@ -38,5 +38,7 @@ build-image:
 
 build-centos: build-image
 	docker run -w /src -v "$(PWD):/src" mid-health-check-svc bash -c "make rpm"
+	mkdir artifacts || true
+	mv $(RPM) ./artifacts
 
 .PHONY: all build test clean rpm build-centos

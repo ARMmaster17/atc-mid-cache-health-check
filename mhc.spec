@@ -12,6 +12,7 @@ Requires:       systemd-rpm-macros
 
 %description
 
+%global debug_package %{nil}
 
 %prep
 %autosetup

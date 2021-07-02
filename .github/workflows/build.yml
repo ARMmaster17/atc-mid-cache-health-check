@@ -20,6 +20,9 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Make RPM
+        run: make rpm
+
 #      - name: Publish code coverage
 #        uses: paambaati/codeclimate-action@v2.7.5
 #        env:
@@ -34,3 +37,10 @@ jobs:
         with:
           files: ./report.xml
           report_individual_runs: "true"
+
+      - name: Upload RPMs
+        uses: actions/upload-artifact@v2
+        with:
+          name: RPM Packages
+          path: ./artifacts/*.rpm
+          retention-days: 3
