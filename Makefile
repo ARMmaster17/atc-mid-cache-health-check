@@ -19,7 +19,7 @@ rpm: clean
 build: $(EXEC_FILE)
 
 $(EXEC_FILE):
-	go build $(SRC_FILE)
+	go build $(SRC_FILE) ldflags="--build-id"
 
 test:
 	go get -u github.com/jstemmer/go-junit-report

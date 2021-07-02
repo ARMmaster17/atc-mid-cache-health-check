@@ -18,8 +18,7 @@ Requires:       systemd-rpm-macros
 
 
 %build
-go build cmd/mhc.go
-
+make build
 
 %install
 rm -rf $RPM_BUILD_ROOT
