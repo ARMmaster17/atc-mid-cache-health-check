@@ -1,7 +1,7 @@
 package main
 
 import (
-	atc_mid_health_check "atc-mid-health-check/mhc-svc"
+	atc_mid_health_check "atc-mid-health-check/mhcsvc"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"

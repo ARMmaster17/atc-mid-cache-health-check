@@ -1,4 +1,4 @@
-package mhc_svc
+package mhcsvc
 
 import (
 	"github.com/go-co-op/gocron"

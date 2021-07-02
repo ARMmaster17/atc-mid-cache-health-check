@@ -1,4 +1,4 @@
-package mhc_svc
+package mhcsvc
 
 import "fmt"
 

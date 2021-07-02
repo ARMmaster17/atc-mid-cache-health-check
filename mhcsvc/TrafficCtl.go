@@ -1,4 +1,4 @@
-package mhc_svc
+package mhcsvc
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	trafficControlMU     sync.Mutex
+	trafficControlMU sync.Mutex
 )
 
 // Init Initializes the mutex object and copies the given logger for use by the module.

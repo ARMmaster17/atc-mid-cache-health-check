@@ -1,4 +1,4 @@
-package mhc_svc
+package mhcsvc
 
 import (
 	"fmt"
@@ -69,6 +69,6 @@ func toAuth() (*toclient.Session, error) {
 		viper.GetBool("TO_INSECURE"),
 		"MHC",
 		false,
-		time.Duration(viper.GetInt("TO_API_TIMEOUT")) * time.Second)
+		time.Duration(viper.GetInt("TO_API_TIMEOUT"))*time.Second)
 	return session, err
 }

@@ -1,4 +1,4 @@
-package mhc_svc
+package mhcsvc
 
 import (
 	"net/http"
@@ -159,19 +159,19 @@ func Test_filterCachesByMidType(t *testing.T) {
 				hostList = HostList{}
 				hostList.Hosts = map[string]HostMid{}
 				hostList.Hosts["testhost1"] = HostMid{
-					Hostname:   "testhost1",
-					Type:       "MID",
-					Available:  true,
-					Manual:     "UP",
-					FQDN:       "testhost1.example.com",
-					Status:     "UP",
+					Hostname:  "testhost1",
+					Type:      "MID",
+					Available: true,
+					Manual:    "UP",
+					FQDN:      "testhost1.example.com",
+					Status:    "UP",
 				}
 
 				return args{
 					tmStatus: map[string]map[string]string{
 						"testhost1": map[string]string{
 							"type": "MID"},
-						},
+					},
 				}
 			},
 			want1: map[string]map[string]string{
