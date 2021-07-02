@@ -1,15 +1,24 @@
-RPM = mid-health-check.rpm
-EXEC_FILE = mid-health-check
-SRC_FILE = main.go
+NAME = mhc
+VERSION = 1.0
+RPM = $(NAME)-$(VERSION)-1.el8.x86_64.rpm
+TAR = $(NAME)-$(VERSION).tar.gz
+EXEC_FILE = $(NAME)
+SRC_FILE = cmd/mhc.go
 JUNIT_REPORT = report.xml
 COVERAGE_REPORT = cover.out
 
-all: $(RPM)
+all: build
 
-$(RPM): clean $(EXEC_FILE)
-	# TODO: Make the RPM
+rpm: clean
+	rpmdev-setuptree
+	git archive --format=tar.gz --prefix=$(NAME)-$(VERSION)/ -o $(TAR) HEAD
+	mv $(TAR) ~/rpmbuild/SOURCES
+	rpmbuild -ba $(NAME).spec
+	cp ~/rpmbuild/RPMS/x86_64/$(RPM) $(RPM)
 
-$(EXEC_FILE): test
+build: $(EXEC_FILE)
+
+$(EXEC_FILE):
 	go build $(SRC_FILE)
 
 test:
@@ -17,17 +26,16 @@ test:
 	go test -v -coverprofile=$(COVERAGE_REPORT) ./... 2>&1 | go-junit-report > $(JUNIT_REPORT)
 
 clean:
-	rm -f $(RPM)
-	rm -f $(EXEC_FILE)
+	rm -f ~/rpmbuild/RPMS/x86_64/$(RPM) || true
+	rm -f ./$(RPM) || true
+	rm -f ./$(EXEC_FILE) || true
+	rm -f ./$(TAR) || true
+	rm -f ~/rpmbuild/SOURCES/$(TAR) || true
 
 build-image:
 	docker build -t mid-health-check-svc .
 
 build-centos: build-image
-	docker run -w /src -v "$(pwd):/src" mid-health-check-svc sh -c "make mid-health-check.rpm"
+	docker run -w /src -v "$(PWD):/src" mid-health-check-svc bash -c "make rpm"
 
-test-centos: build-image
-	rm ./report.xml || true
-	docker run -w /src -v "$(pwd):/src" mid-health-check-svc sh -c "/usr/local/go/bin/go test ."
-
-.PHONY: all test clean build-centos test-centos
+.PHONY: all build test clean rpm build-centos
