@@ -6,6 +6,7 @@ EXEC_FILE = $(NAME)
 SRC_FILE = cmd/mhc.go
 JUNIT_REPORT = report.xml
 COVERAGE_REPORT = cover.out
+LD_FLAGS=-ldflags="--build-id"
 
 all: build
 
@@ -19,7 +20,7 @@ rpm: clean
 build: $(EXEC_FILE)
 
 $(EXEC_FILE):
-	go build $(SRC_FILE) ldflags="--build-id"
+	go build -v $(LD_FLAGS) -o $(NAME) $(SRC_FILE)
 
 test:
 	go get -u github.com/jstemmer/go-junit-report
