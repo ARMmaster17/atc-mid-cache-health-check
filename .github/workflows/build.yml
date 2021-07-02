@@ -21,7 +21,7 @@ jobs:
         run: make test
 
       - name: Make RPM
-        run: make rpm
+        run: make build-centos
 
 #      - name: Publish code coverage
 #        uses: paambaati/codeclimate-action@v2.7.5
