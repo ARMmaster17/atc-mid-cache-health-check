@@ -1,4 +1,4 @@
-package atc_mid_health_check
+package mhc
 
 import (
 	"github.com/go-co-op/gocron"
