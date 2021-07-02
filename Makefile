@@ -6,7 +6,7 @@ EXEC_FILE = $(NAME)
 SRC_FILE = cmd/mhc.go
 JUNIT_REPORT = report.xml
 COVERAGE_REPORT = cover.out
-LD_FLAGS=-ldflags="--build-id"
+LD_FLAGS=-ldflags=-linkmode=external
 
 all: build
 
