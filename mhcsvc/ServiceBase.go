@@ -81,7 +81,7 @@ func initVars() {
 
 // pollTrafficCtlStatus Updates HostList with the latest mid cache data using traffic_ctl.
 func pollTrafficCtlStatus() (string, error) {
-	return ExecuteCommand("metric match host_status", false)
+	return ExecuteTrafficCtlCommand("metric match host_status", false)
 }
 
 // lockMutex Common function for locking a mutex. Will display a trace message if the mutex is currently locked,
@@ -102,7 +102,7 @@ func lockMutex(mu *sync.Mutex, timeout int) {
 func updateMidsInTrafficCtl(updateCmds []string) {
 	for i, cmd := range updateCmds {
 		Logger.Trace().Msgf("updating host status (%d/%d)", i+1, len(updateCmds))
-		_, err := ExecuteCommand(cmd, true)
+		_, err := ExecuteTrafficCtlCommand(cmd, true)
 		if err != nil {
 			Logger.Error().Err(err).Msgf("unable to run command %s (%d/%d)", cmd, i+1, len(updateCmds))
 		}

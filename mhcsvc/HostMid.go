@@ -1,6 +1,10 @@
 package mhcsvc
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 // HostMid Represents a single mid cache that is tracked by traffic_ctl. Acts as the authoritative state for that
 // server to all three checking services. Assumes that the parent HostList handles locking and atomic transactions
@@ -19,21 +23,23 @@ type HostMid struct {
 
 // buildHostStatusStruct Takes a line from the output of traffic_ctl and converts it to a HostMid object.
 func buildHostStatusStruct(fqdn string, statusLine string) (HostMid, error) {
-	statusStruct := HostMid{}
-	statusStruct.FQDN = fqdn // TODO: Process FQDN in this function only.
-	var status string
-	var active string
-	var local string
-	var manual string
-	var selfDetect string
-	tokensFound, err := fmt.Sscanf(statusLine, "HOST_STATUS_%s,ACTIVE:%s:0:0,LOCAL:%s:0:0,MANUAL:%s:0:0,SELF_DETECT:%s:0:0", &status, &active, &local, &manual, &selfDetect)
-	if err != nil {
-		Logger.Error().Err(err).Str("line", statusLine).Str("fqdn", fqdn).Msg("unable to parse traffic_ctl output")
-		return HostMid{}, err
+	if statusLine == "" {
+		return HostMid{}, fmt.Errorf("statusLine is empty")
 	}
-	if tokensFound < 5 {
-		Logger.Error().Str("line", statusLine).Str("fqdn", fqdn).Msgf("expected 5 tokens in traffic_ctl output, found %d", tokensFound)
+	statusStruct := HostMid{}
+	statusStruct.FQDN = fqdn
+	statusStruct.Hostname = strings.Split(fqdn, ".")[0]
+	re := regexp.MustCompile(`HOST_STATUS_(?P<STATUS>[a-zA-Z]+),ACTIVE:(?P<ACTIVE>[a-zA-Z]+):0:0,LOCAL:(?P<LOCAL>[a-zA-Z]+):0:0,MANUAL:(?P<MANUAL>[a-zA-Z]+):0:0,SELF_DETECT:(?P<SELF_DETECT>[a-zA-Z]+):0:0`)
+	if !re.MatchString(statusLine) {
+		Logger.Error().Str("line", statusLine).Str("fqdn", fqdn).Msgf("traffic_ctl does not match expected format")
 		return HostMid{}, fmt.Errorf("traffic_ctl output is missing HostMid data")
 	}
+	matches := re.FindStringSubmatch(statusLine)
+	statusStruct.Status = matches[re.SubexpIndex("STATUS")]
+	statusStruct.Active = matches[re.SubexpIndex("ACTIVE")]
+	statusStruct.Local = matches[re.SubexpIndex("LOCAL")]
+	statusStruct.Manual = matches[re.SubexpIndex("MANUAL")]
+	statusStruct.SelfDetect = matches[re.SubexpIndex("SELF_DETECT")]
+
 	return statusStruct, nil
 }

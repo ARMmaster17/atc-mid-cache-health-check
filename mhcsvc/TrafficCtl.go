@@ -17,9 +17,9 @@ func Init(svcLogger zerolog.Logger) {
 	trafficControlMU = sync.Mutex{}
 }
 
-// ExecuteCommand Runs the given command using the user-provided path to traffic_ctl. Returns STDOUT upon success,
+// ExecuteTrafficCtlCommand Runs the given command using the user-provided path to traffic_ctl. Returns STDOUT upon success,
 // or an error if an error occured. Function will block if it does not have
-func ExecuteCommand(subCommand string, printOutput bool) (string, error) {
+func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, error) {
 	if subCommand == "" {
 		return "", fmt.Errorf("empty command, nothing to run")
 	}
