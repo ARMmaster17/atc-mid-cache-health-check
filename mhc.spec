@@ -8,7 +8,6 @@ URL:            https://github.com/ARMmaster17/atc-mid-cache-health-check
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  golang
-Requires:       systemd-rpm-macros
 
 %description
 
