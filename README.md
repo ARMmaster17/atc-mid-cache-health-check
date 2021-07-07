@@ -20,4 +20,4 @@ sudo systemctl start mhc
 # Local Development
 
 Build the project with `make build`. Test with `make test`. Build
-the RPM with `make build-centos` (requires Docker).
+the RPM with `make build-centos` (requires Docker). 
