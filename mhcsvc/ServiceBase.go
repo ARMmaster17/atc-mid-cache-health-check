@@ -33,7 +33,7 @@ func StartServiceBase() {
 	Init(Logger)
 	s, err := registerCronJobs()
 	if err != nil {
-		Logger.Fatal().Err(err).Msg("unable to register interval checks with go-cron")
+		Logger.Fatal().Err(err).Stack().Msg("unable to register interval checks with go-cron")
 		return
 	}
 
@@ -64,13 +64,19 @@ func registerCronJobs() (*gocron.Scheduler, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
-	tmCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
-	_, err = s.Every(tmCheckInterval).Seconds().Do(CheckTMService)
+	tmCheckInterval, err := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	toCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TO_CHECK_INTERVAL"), 10, 64)
-	_, err = s.Every(toCheckInterval).Seconds().Do(CheckTOService)
+	_, err = s.Every(int(tmCheckInterval)).Seconds().Do(CheckTMService)
+	if err != nil {
+		return nil, err
+	}
+	toCheckInterval, err := strconv.ParseInt(os.Getenv("MHC_TO_CHECK_INTERVAL"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.Every(int(toCheckInterval)).Seconds().Do(CheckTOService)
 	if err != nil {
 		return nil, err
 	}

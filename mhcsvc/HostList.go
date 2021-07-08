@@ -1,6 +1,7 @@
 package mhcsvc
 
 import (
+	"github.com/rs/zerolog/log"
 	"strings"
 	"sync"
 )
@@ -45,6 +46,10 @@ func (hl *HostList) Refresh(mutexTimeout int) {
 	for i, line := range strings.Split(trafficCtlOutput, "\n") {
 		Logger.Trace().Str("line", line).Msgf("processing line %d from traffic_ctl output", i)
 		tmpLine := strings.Split(line, " ")
+		if len(tmpLine) < 2 {
+			log.Error().Str("line", line).Msg("traffic_ctl returned an invalid result")
+			return
+		}
 		fqdn := strings.Replace(tmpLine[0], "proxy.process.host_status.", "", -1)
 		Logger.Debug().Str("line", line).Str("fqdn", fqdn).Msg("got FQDN from traffic_ctl output")
 		hostname := strings.Split(fqdn, ".")[0]
