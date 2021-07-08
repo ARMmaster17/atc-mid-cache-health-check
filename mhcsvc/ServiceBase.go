@@ -77,8 +77,6 @@ func registerCronJobs() (*gocron.Scheduler, error) {
 
 // initVars Loads variables from the environment. Currently performs no validation checks on variable contents.
 func initVars() {
-	logLevelConfig, _ := strconv.ParseInt(os.Getenv("MHC_LOG_LEVEL"), 10, 64)
-	LogLevel = zerolog.Level(logLevelConfig)
 	trafficMonitors = strings.Split(os.Getenv("MHC_TM_HOSTS"), ",")
 	apiPath = os.Getenv("MHC_TM_API_PATH")
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
+	"strconv"
 )
 
 // main Entry point of the application. Handles core services before handing off to ServiceBase.
@@ -20,6 +21,8 @@ func main() {
 // and return a console-only logger.
 func initLogger() error {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	logLevelConfig, _ := strconv.ParseInt(os.Getenv("MHC_LOG_LEVEL"), 10, 64)
+	atc_mid_health_check.LogLevel = zerolog.Level(logLevelConfig)
 	zerolog.SetGlobalLevel(atc_mid_health_check.LogLevel)
 	var multi zerolog.LevelWriter
 	if os.Getenv("MHC_USE_LOGFILE") == "TRUE" {
