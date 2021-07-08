@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 // CheckTMService Entry point for Traffic Monitor checks. Checks the current state of mid caches in HostList using
@@ -71,7 +72,8 @@ func filterCachesByMidType(tmStatus map[string]map[string]string) map[string]map
 	Logger.Debug().Msg("filtering TM payload by MID status")
 	var filteredTmStatus = make(map[string]map[string]string)
 	Logger.Trace().Msg("obtaining lock on hostList")
-	hostList.Lock(viper.GetInt("TM_CHECK_INTERVAL") / 2)
+	tmCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
+	hostList.Lock(int(tmCheckInterval) / 2)
 	for hostname, hostdata := range tmStatus {
 		_, hostExists := hostList.Hosts[hostname]
 		if hostdata["type"] == "MID" && hostExists {
@@ -88,7 +90,8 @@ func filterCachesByMidType(tmStatus map[string]map[string]string) map[string]map
 // are prepared for all mids that have mis-matched data to be run with traffic_ctl.
 func checkForCacheStateChanges(tmStatus map[string]map[string]string) []string {
 	var updateCmds []string
-	hostList.Lock(viper.GetInt("TM_CHECK_INTERVAL") / 2)
+	tmCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
+	hostList.Lock(int(tmCheckInterval) / 2)
 	// Locking at the method level because in Golang defer cannot be used inside a for loop.
 	defer hostList.Unlock()
 	for hostname, hostdata := range tmStatus {

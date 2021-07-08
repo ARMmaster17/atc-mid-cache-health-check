@@ -4,14 +4,11 @@ import (
 	atc_mid_health_check "atc-mid-health-check/mhcsvc"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"os"
 )
 
 // main Entry point of the application. Handles core services before handing off to ServiceBase.
 func main() {
-	viper.SetEnvPrefix("MHC")
-	viper.AutomaticEnv()
 	if initLogger() != nil {
 		log.Fatal().Msg("unable to start logging")
 	}
@@ -25,7 +22,7 @@ func initLogger() error {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.SetGlobalLevel(atc_mid_health_check.LogLevel)
 	var multi zerolog.LevelWriter
-	if viper.GetString("USE_LOGFILE") == "TRUE" {
+	if os.Getenv("MHC_USE_LOGFILE") == "TRUE" {
 		logFile, err := os.OpenFile(atc_mid_health_check.LogLocation, os.O_RDWR, 0644)
 		if err != nil {
 			log.Warn().Msgf("unable to open '%s':\n%v", atc_mid_health_check.LogLocation, err)

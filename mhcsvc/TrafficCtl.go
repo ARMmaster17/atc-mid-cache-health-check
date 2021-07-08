@@ -3,7 +3,7 @@ package mhcsvc
 import (
 	"fmt"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
+	"os"
 	"os/exec"
 	"sync"
 )
@@ -30,7 +30,7 @@ func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, erro
 		Logger.Debug().Msg("removing lock on traffic_ctl executable")
 		trafficControlMU.Unlock()
 	}()
-	tctlPath := viper.GetString("TRAFFIC_CTL_DIR")
+	tctlPath := os.Getenv("TRAFFIC_CTL_DIR")
 	cmd := fmt.Sprintf("%s/bin/traffic_ctl %s", tctlPath, subCommand)
 	Logger.Debug().Str("cmd", cmd).Msg("invoking traffic_ctl")
 	out, err := exec.Command(cmd).Output()

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/apache/trafficcontrol/lib/go-tc"
 	toclient "github.com/apache/trafficcontrol/traffic_ops/v3-client"
-	"github.com/spf13/viper"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -22,7 +23,7 @@ func CheckTOService() {
 func getMidsFromTO() (tc.ServersV3Response, bool) {
 	toc, err := toAuth()
 	if err != nil {
-		Logger.Error().Msgf("unable to connect to %s", viper.GetString("TO_HOSTNAME"))
+		Logger.Error().Msgf("unable to connect to %s", os.Getenv("TO_HOSTNAME"))
 		return tc.ServersV3Response{}, true
 	}
 	params := url.Values{}
@@ -37,7 +38,8 @@ func getMidsFromTO() (tc.ServersV3Response, bool) {
 
 func getAdminDownMids(response tc.ServersV3Response) []string {
 	var updateCmds []string
-	hostList.Lock(viper.GetInt("TO_CHECK_INTERVAL") / 2)
+	toCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TO_CHECK_INTERVAL"), 10, 64)
+	hostList.Lock(int(toCheckInterval) / 2)
 	defer hostList.Unlock()
 	for _, server := range response.Response {
 		_, hostExists := hostList.Hosts[*server.HostName]
@@ -59,16 +61,17 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 
 func toAuth() (*toclient.Session, error) {
 	schema := "https"
-	if viper.GetBool("TO_INSECURE") {
+	if os.Getenv("MHC_TM_INSECURE") == "TRUE" {
 		schema = "http"
 	}
+	toApiTimeout, _ := strconv.ParseInt(os.Getenv("MHC_TO_API_TIMEOUT"), 10, 64)
 	session, _, err := toclient.LoginWithAgent(
-		fmt.Sprintf("%s://%s", schema, viper.GetString("TO_HOSTNAME")),
-		viper.GetString("TO_USERNAME"),
-		viper.GetString("TO_PASSWORD"),
-		viper.GetBool("TO_INSECURE"),
+		fmt.Sprintf("%s://%s", schema, os.Getenv("TO_HOSTNAME")),
+		os.Getenv("TO_USERNAME"),
+		os.Getenv("TO_PASSWORD"),
+		os.Getenv("TO_INSECURE") == "TRUE",
 		"MHC",
 		false,
-		time.Duration(viper.GetInt("TO_API_TIMEOUT"))*time.Second)
+		time.Duration(toApiTimeout)*time.Second)
 	return session, err
 }

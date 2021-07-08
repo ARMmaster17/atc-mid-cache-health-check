@@ -3,8 +3,9 @@ package mhcsvc
 import (
 	"github.com/go-co-op/gocron"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
+	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -51,11 +52,7 @@ func StartServiceBase() {
 // registerCronJobs Sets up interval jobs so that checks can be performed on a specific schedule. Resource locking
 // and job overrun protection is handled by gocron.
 func registerCronJobs() (*gocron.Scheduler, error) {
-	Logger.Trace().
-		Int("TCP_CHECK_INTERVAL", viper.GetInt("TCP_CHECK_INTERVAL")).
-		Int("TM_CHECK_INTERVAL", viper.GetInt("TM_CHECK_INTERVAL")).
-		Int("TO_CHECK_INTERVAL", viper.GetInt("TO_CHECK_INTERVAL")).
-		Msg("setting up scheduled API checks")
+	Logger.Trace().Msg("setting up scheduled API checks")
 	s := gocron.NewScheduler(time.UTC)
 	_, err := s.Every(1).Minutes().Do(hostList.Refresh) // Reload list of mids
 	if err != nil {
@@ -65,11 +62,13 @@ func registerCronJobs() (*gocron.Scheduler, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
-	_, err = s.Every(viper.GetInt("TM_CHECK_INTERVAL")).Seconds().Do(CheckTMService)
+	tmCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
+	_, err = s.Every(tmCheckInterval).Seconds().Do(CheckTMService)
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.Every(viper.GetInt("TO_CHECK_INTERVAL")).Seconds().Do(CheckTOService)
+	toCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TO_CHECK_INTERVAL"), 10, 64)
+	_, err = s.Every(toCheckInterval).Seconds().Do(CheckTOService)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +77,10 @@ func registerCronJobs() (*gocron.Scheduler, error) {
 
 // initVars Loads variables from the environment. Currently performs no validation checks on variable contents.
 func initVars() {
-	LogLevel = zerolog.Level(viper.GetInt("LOG_LEVEL"))
-	trafficMonitors = strings.Split(viper.GetString("TM_HOSTS"), ",")
-	apiPath = viper.GetString("TM_API_PATH")
+	logLevelConfig, _ := strconv.ParseInt(os.Getenv("MHC_LOG_LEVEL"), 10, 64)
+	LogLevel = zerolog.Level(logLevelConfig)
+	trafficMonitors = strings.Split(os.Getenv("MHC_TM_HOSTS"), ",")
+	apiPath = os.Getenv("MHC_TM_API_PATH")
 }
 
 // pollTrafficCtlStatus Updates HostList with the latest mid cache data using traffic_ctl.
