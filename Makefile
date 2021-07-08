@@ -12,7 +12,8 @@ all: build
 
 rpm: clean
 	rpmdev-setuptree
-	git archive --format=tar.gz --prefix=$(NAME)-$(VERSION)/ -o $(TAR) HEAD
+	touch ./$(TAR)
+	tar -czf $(TAR) --exclude=$(TAR) --transform 's,^\.,$(NAME)-$(VERSION),' .
 	mv $(TAR) ~/rpmbuild/SOURCES
 	rpmbuild -ba $(NAME).spec
 	cp ~/rpmbuild/RPMS/x86_64/$(RPM) $(RPM)
