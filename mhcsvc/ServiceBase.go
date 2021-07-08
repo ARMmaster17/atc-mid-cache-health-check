@@ -54,7 +54,9 @@ func StartServiceBase() {
 func registerCronJobs() (*gocron.Scheduler, error) {
 	Logger.Trace().Msg("setting up scheduled API checks")
 	s := gocron.NewScheduler(time.UTC)
-	_, err := s.Every(1).Minutes().Do(hostList.Refresh) // Reload list of mids
+	_, err := s.Every(1).Minutes().Do(func() {
+		hostList.Refresh(5)
+	}) // Reload list of mids
 	if err != nil {
 		return nil, err
 	}
