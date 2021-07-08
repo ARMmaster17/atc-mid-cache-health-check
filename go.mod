@@ -11,7 +11,5 @@ require (
 	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/rs/zerolog v1.23.0
-	github.com/stretchr/testify v1.7.0 // indirect
-	golang.org/x/sys v0.0.0-20210603125802-9665404d3644 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	github.com/stretchr/testify v1.7.0
 )
