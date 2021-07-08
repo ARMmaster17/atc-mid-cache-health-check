@@ -30,7 +30,7 @@ func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, erro
 		Logger.Debug().Msg("removing lock on traffic_ctl executable")
 		trafficControlMU.Unlock()
 	}()
-	tctlPath := os.Getenv("TRAFFIC_CTL_DIR")
+	tctlPath := os.Getenv("MHC_TRAFFIC_CTL_DIR")
 	cmd := fmt.Sprintf("%s/bin/traffic_ctl %s", tctlPath, subCommand)
 	Logger.Debug().Str("cmd", cmd).Msg("invoking traffic_ctl")
 	out, err := exec.Command(cmd).Output()
