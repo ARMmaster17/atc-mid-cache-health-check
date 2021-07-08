@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/mid-health-check
+ExecStart=/usr/bin/mhc
 Restart=on-failure
 EnvironmentFile=/etc/mhc/mhc.conf
 
