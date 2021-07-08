@@ -51,16 +51,20 @@ func StartServiceBase() {
 // registerCronJobs Sets up interval jobs so that checks can be performed on a specific schedule. Resource locking
 // and job overrun protection is handled by gocron.
 func registerCronJobs() (*gocron.Scheduler, error) {
-	Logger.Trace().Msg("setting up scheduled API checks")
+	Logger.Trace().
+		Int("TCP_CHECK_INTERVAL", viper.GetInt("TCP_CHECK_INTERVAL")).
+		Int("TM_CHECK_INTERVAL", viper.GetInt("TM_CHECK_INTERVAL")).
+		Int("TO_CHECK_INTERVAL", viper.GetInt("TO_CHECK_INTERVAL")).
+		Msg("setting up scheduled API checks")
 	s := gocron.NewScheduler(time.UTC)
 	_, err := s.Every(1).Minutes().Do(hostList.Refresh) // Reload list of mids
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.Every(viper.GetInt("TCP_CHECK_INTERVAL")).Seconds().Do(nil /*TCP Check*/) // Ignore for now
-	if err != nil {
-		return nil, err
-	}
+	//_, err = s.Every(viper.GetInt("TCP_CHECK_INTERVAL")).Seconds().Do(nil /*TCP Check*/) // Ignore for now
+	//if err != nil {
+	//	return nil, err
+	//}
 	_, err = s.Every(viper.GetInt("TM_CHECK_INTERVAL")).Seconds().Do(CheckTMService)
 	if err != nil {
 		return nil, err
