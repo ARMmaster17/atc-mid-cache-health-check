@@ -44,11 +44,15 @@ func (hl *HostList) Refresh(mutexTimeout int) {
 	// Reset the array so no old servers get left behind.
 	hl.Hosts = map[string]HostMid{}
 	for i, line := range strings.Split(trafficCtlOutput, "\n") {
+		if line == "" {
+			Logger.Trace().Msg("ignoring empty line from traffic_ctl output")
+			continue
+		}
 		Logger.Trace().Str("line", line).Msgf("processing line %d from traffic_ctl output", i)
 		tmpLine := strings.Split(line, " ")
 		if len(tmpLine) < 2 {
 			log.Error().Str("line", line).Msg("traffic_ctl returned an invalid result")
-			return
+			continue
 		}
 		fqdn := strings.Replace(tmpLine[0], "proxy.process.host_status.", "", -1)
 		Logger.Debug().Str("line", line).Str("fqdn", fqdn).Msg("got FQDN from traffic_ctl output")
@@ -56,8 +60,8 @@ func (hl *HostList) Refresh(mutexTimeout int) {
 		Logger.Debug().Str("line", line).Str("hostname", hostname).Msg("got hostname from traffic_ctl output")
 		hl.Hosts[hostname], err = buildHostStatusStruct(fqdn, tmpLine[1])
 		if err != nil {
-			Logger.Error().Err(err).Msg("unable to parse TrafficCtl output")
-			return
+			Logger.Error().Err(err).Str("line", line).Msg("unable to parse TrafficCtl output line")
+			continue
 		}
 	}
 }
