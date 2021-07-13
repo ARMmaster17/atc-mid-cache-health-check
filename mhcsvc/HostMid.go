@@ -29,7 +29,7 @@ func buildHostStatusStruct(fqdn string, statusLine string) (HostMid, error) {
 	statusStruct := HostMid{}
 	statusStruct.FQDN = fqdn
 	statusStruct.Hostname = strings.Split(fqdn, ".")[0]
-	re := regexp.MustCompile(`HOST_STATUS_(?P<STATUS>[a-zA-Z]+),ACTIVE:(?P<ACTIVE>[a-zA-Z]+):0:0,LOCAL:(?P<LOCAL>[a-zA-Z]+):0:0,MANUAL:(?P<MANUAL>[a-zA-Z]+):0:0,SELF_DETECT:(?P<SELF_DETECT>[a-zA-Z]+):0:0`)
+	re := regexp.MustCompile(`HOST_STATUS_(?P<STATUS>[a-zA-Z]+),ACTIVE:(?P<ACTIVE>[a-zA-Z]+):0:0,LOCAL:(?P<LOCAL>[a-zA-Z]+):0:0,MANUAL:(?P<MANUAL>[a-zA-Z]+):0:0,SELF_DETECT:(?P<SELF_DETECT>[a-zA-Z]+):0`)
 	if !re.MatchString(statusLine) {
 		Logger.Error().Str("line", statusLine).Str("fqdn", fqdn).Msgf("traffic_ctl does not match expected format")
 		return HostMid{}, fmt.Errorf("traffic_ctl output is missing HostMid data")

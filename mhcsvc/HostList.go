@@ -53,7 +53,7 @@ func (hl *HostList) Refresh(mutexTimeout int) {
 		fqdn := strings.Replace(tmpLine[0], "proxy.process.host_status.", "", -1)
 		Logger.Debug().Str("line", line).Str("fqdn", fqdn).Msg("got FQDN from traffic_ctl output")
 		hostname := strings.Split(fqdn, ".")[0]
-		Logger.Debug().Str("line", line).Str("hostname", hostname).Msg("got FQDN from traffic_ctl output")
+		Logger.Debug().Str("line", line).Str("hostname", hostname).Msg("got hostname from traffic_ctl output")
 		hl.Hosts[hostname], err = buildHostStatusStruct(fqdn, tmpLine[1])
 		if err != nil {
 			Logger.Error().Err(err).Msg("unable to parse TrafficCtl output")
