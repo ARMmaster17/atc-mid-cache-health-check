@@ -23,7 +23,7 @@ func CheckTOService() {
 func getMidsFromTO() (tc.ServersV3Response, bool) {
 	toc, err := toAuth()
 	if err != nil {
-		Logger.Error().Msgf("unable to connect to %s", os.Getenv("TO_HOSTNAME"))
+		Logger.Error().Msgf("unable to connect to %s", os.Getenv("MHC_TO_HOSTNAME"))
 		return tc.ServersV3Response{}, true
 	}
 	params := url.Values{}
