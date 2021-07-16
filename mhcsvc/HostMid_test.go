@@ -64,6 +64,28 @@ func Test_buildHostStatusStruct(t *testing.T) {
 			wantErr: false,
 			inspectErr: nil,
 		},
+		{
+			name: "testBuildsValidDownLine",
+			args: func(t *testing.T) args {
+				return args{
+					fqdn: "test.example.com",
+					statusLine: "HOST_STATUS_DOWN,ACTIVE:UP:0:0,LOCAL:UP:0:0,MANUAL:DOWN:1626444054:0,SELF_DETECT:UP:0:0",
+				}
+			},
+			want1: HostMid{
+				Hostname:   "test",
+				Type:       "",
+				Available:  false,
+				Manual:     "DOWN",
+				FQDN:       "test.example.com",
+				Status:     "DOWN",
+				Active:     "UP",
+				Local:      "UP",
+				SelfDetect: "UP",
+			},
+			wantErr: false,
+			inspectErr: nil,
+		},
 	}
 
 	for _, tt := range tests {

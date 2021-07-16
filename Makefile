@@ -29,7 +29,7 @@ test:
 
 clean:
 	rm -f ~/rpmbuild/RPMS/x86_64/$(RPM) || true
-	rm -f ./artifacts/$(RPM) || true
+	rm -f ./artifacts/* || true
 	rm -f ./$(EXEC_FILE) || true
 	rm -f ./$(TAR) || true
 	rm -f ~/rpmbuild/SOURCES/$(TAR) || true
@@ -42,4 +42,9 @@ build-centos: build-image
 	mkdir artifacts || true
 	mv $(RPM) ./artifacts
 
-.PHONY: all build test clean rpm build-centos
+build-centos-exec-only: build-image
+	docker run -w /src -v "$(PWD):/src" mid-health-check-svc bash -c "make build"
+	mkdir artifacts || true
+	mv $(EXEC_FILE) ./artifacts
+
+.PHONY: all build test clean rpm build-centos build-centos-exec-only

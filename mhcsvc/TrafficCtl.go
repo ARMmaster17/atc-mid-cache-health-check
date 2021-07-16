@@ -19,7 +19,7 @@ func Init(svcLogger zerolog.Logger) {
 }
 
 // ExecuteTrafficCtlCommand Runs the given command using the user-provided path to traffic_ctl. Returns STDOUT upon success,
-// or an error if an error occured. Function will block if it does not have
+// or an error if an error occurred. Function will block if it does not have
 func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, error) {
 	if subCommand == "" {
 		return "", fmt.Errorf("empty command, nothing to run")

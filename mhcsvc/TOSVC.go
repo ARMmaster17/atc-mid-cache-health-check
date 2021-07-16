@@ -21,16 +21,17 @@ func CheckTOService() {
 }
 
 func getMidsFromTO() (tc.ServersV3Response, bool) {
+	Logger.Debug().Str("svc", "TOService").Msg("connecting to TO")
 	toc, err := toAuth()
 	if err != nil {
-		Logger.Error().Msgf("unable to connect to %s", os.Getenv("MHC_TO_HOSTNAME"))
+		Logger.Error().Str("svc", "TOService").Msgf("unable to connect to %s", os.Getenv("MHC_TO_HOSTNAME"))
 		return tc.ServersV3Response{}, true
 	}
 	params := url.Values{}
 	params.Add("type", "MID")
 	response, info, err := toc.GetServersWithHdr(&params, nil)
 	if err != nil || info.StatusCode != http.StatusOK {
-		Logger.Error().Msg("unable to get list of MID servers from TO")
+		Logger.Error().Err(err).Str("svc", "TOService").Msg("unable to get list of MID servers from TO")
 		return tc.ServersV3Response{}, true
 	}
 	return response, false
@@ -44,14 +45,15 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 	for _, server := range response.Response {
 		_, hostExists := hostList.Hosts[*server.HostName]
 		if !hostExists {
+			Logger.Trace().Str("to_hostname", *server.HostName).Msg("ignoring, not in hostList")
 			continue
 		}
 		updateCmd := ""
 		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
-			Logger.Debug().Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")
+			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")
 			updateCmd = fmt.Sprintf("host down %s", *server.FQDN)
 		} else if *server.Status == "ALL" && hostList.Hosts[*server.HostName].Manual != "UP" {
-			Logger.Debug().Str("hostname", *server.HostName).Msg("manual is not UP, but TO reports server is not ADMIN_DOWN")
+			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not UP, but TO reports server is not ADMIN_DOWN")
 			updateCmd = fmt.Sprintf("host up %s", *server.FQDN)
 		}
 		if updateCmd != "" {
@@ -68,10 +70,10 @@ func toAuth() (*toclient.Session, error) {
 	}
 	toApiTimeout, _ := strconv.ParseInt(os.Getenv("MHC_TO_API_TIMEOUT"), 10, 64)
 	session, _, err := toclient.LoginWithAgent(
-		fmt.Sprintf("%s://%s", schema, os.Getenv("TO_HOSTNAME")),
-		os.Getenv("TO_USERNAME"),
-		os.Getenv("TO_PASSWORD"),
-		os.Getenv("TO_INSECURE") == "TRUE",
+		fmt.Sprintf("%s://%s", schema, os.Getenv("MHC_TO_HOSTNAME")),
+		os.Getenv("MHC_TO_USERNAME"),
+		os.Getenv("MHC_TO_PASSWORD"),
+		os.Getenv("MHC_TO_INSECURE") == "TRUE",
 		"MHC",
 		false,
 		time.Duration(toApiTimeout)*time.Second)
