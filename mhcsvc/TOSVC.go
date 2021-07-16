@@ -48,8 +48,10 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 		}
 		updateCmd := ""
 		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
+			Logger.Debug().Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")
 			updateCmd = fmt.Sprintf("host down %s", *server.FQDN)
 		} else if *server.Status == "ALL" && hostList.Hosts[*server.HostName].Manual != "UP" {
+			Logger.Debug().Str("hostname", *server.HostName).Msg("manual is not UP, but TO reports server is not ADMIN_DOWN")
 			updateCmd = fmt.Sprintf("host up %s", *server.FQDN)
 		}
 		if updateCmd != "" {
