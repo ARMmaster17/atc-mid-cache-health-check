@@ -34,7 +34,7 @@ func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, erro
 	tctlPath := os.Getenv("MHC_TRAFFIC_CTL_DIR")
 	Logger.Debug().Str("cmd", fmt.Sprintf("%s/bin/traffic_ctl %s", tctlPath, subCommand)).Msg("invoking traffic_ctl")
 	splitCmd := strings.Split(subCommand, " ")
-	out, err := exec.Command(fmt.Sprintf("%s/bin/traffic_ctl", tctlPath), splitCmd...).CombinedOutput()
+	out, err := exec.Command("sudo", append([]string{fmt.Sprintf("%s/bin/traffic_ctl", tctlPath)}, splitCmd...)...).CombinedOutput()
 	if printOutput {
 		fmt.Printf("%s %v", string(out), err)
 	}

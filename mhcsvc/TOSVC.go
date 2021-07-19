@@ -24,7 +24,7 @@ func getMidsFromTO() (tc.ServersV3Response, bool) {
 	Logger.Debug().Str("svc", "TOService").Msg("connecting to TO")
 	toc, err := toAuth()
 	if err != nil {
-		Logger.Error().Str("svc", "TOService").Msgf("unable to connect to %s", os.Getenv("MHC_TO_HOSTNAME"))
+		Logger.Error().Err(err).Str("svc", "TOService").Msgf("unable to connect to %s", os.Getenv("MHC_TO_HOSTNAME"))
 		return tc.ServersV3Response{}, true
 	}
 	params := url.Values{}
@@ -34,6 +34,7 @@ func getMidsFromTO() (tc.ServersV3Response, bool) {
 		Logger.Error().Err(err).Str("svc", "TOService").Msg("unable to get list of MID servers from TO")
 		return tc.ServersV3Response{}, true
 	}
+	Logger.Trace().Str("svc", "TOService").Int("count", len(response.Response)).Msg("connected to TO")
 	return response, false
 }
 
@@ -42,19 +43,21 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 	toCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TO_CHECK_INTERVAL"), 10, 64)
 	hostList.Lock(int(toCheckInterval) / 2)
 	defer hostList.Unlock()
-	for _, server := range response.Response {
+	for i, server := range response.Response {
 		_, hostExists := hostList.Hosts[*server.HostName]
+		Logger.Trace().Str("svc", "TOService").Str("to_hostname", *server.HostName).Msgf("(%d/%d) checking server from TO", i, len(response.Response))
 		if !hostExists {
 			Logger.Trace().Str("to_hostname", *server.HostName).Msg("ignoring, not in hostList")
 			continue
 		}
 		updateCmd := ""
+		Logger.Trace().Str("svc", "TOService").Str("status", *server.Status).Str("MANUAL", hostList.Hosts[*server.HostName].Manual).Msg("comparing server status")
 		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
 			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")
-			updateCmd = fmt.Sprintf("host down %s", *server.FQDN)
-		} else if *server.Status == "ALL" && hostList.Hosts[*server.HostName].Manual != "UP" {
+			updateCmd = fmt.Sprintf("host down %s.%s", *server.HostName, *server.DomainName)
+		} else if *server.Status == "REPORTED" && hostList.Hosts[*server.HostName].Manual != "UP" {
 			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not UP, but TO reports server is not ADMIN_DOWN")
-			updateCmd = fmt.Sprintf("host up %s", *server.FQDN)
+			updateCmd = fmt.Sprintf("host up %s.%s", *server.HostName, *server.DomainName)
 		}
 		if updateCmd != "" {
 			updateCmds = append(updateCmds, updateCmd)

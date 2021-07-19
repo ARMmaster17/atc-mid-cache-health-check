@@ -17,6 +17,8 @@ sudo dnf install mhc-1.0-1.el8.x86_64.rpm
 sudo systemctl start mhc
 ```
 
+Ensure that the user listed in `mhc.service` in your systemd directory has password-less sudo access.
+
 # Local Development
 
 Build the project with `make build`. Test with `make test`. Build
@@ -33,7 +35,7 @@ the RPM with `make build-centos` (requires Docker).
 | MHC_TCP_CHECK_INTERVAL | Interval in seconds to perform a TCP check on each cache server (not implemented).                                              | 2                   |
 | MHC_TM_CHECK_INTERVAL  | Interval in seconds to check data in TM for each cache server.                                                                  | 10                  |
 | MHC_TO_CHECK_INTERVAL  | Interval in seconds to check Traffic Ops for status of each cache server.                                                       |                     |
-| MHC_TO_HOSTNAME        | FQDN of the Traffic Ops server to connect to.                                                                                   |                     |
+| MHC_TO_HOSTNAME        | FQDN of the Traffic Ops server to connect to (no schema or trailing `/`).                                                       |                     |
 | MHC_TO_USERNAME        | Username used to log in to the Traffic Ops API.                                                                                 |                     |
 | MHC_TO_PASSWORD        | Password used to log in to the Traffic Ops API.                                                                                 |                     |
 | MHC_TO_INSECURE        | Determines if strict certificate checking should be ignored when connecting to Traffic Ops.                                     | FALSE               |
