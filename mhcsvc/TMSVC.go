@@ -65,7 +65,9 @@ func tryAllTrafficMonitors() (*http.Response, error) {
 // hostname.
 func parseTrafficMonitorStatus(response []byte) (map[string]TMServerStatus, error) {
 	var result map[string]TMServerStatus
+	Logger.Trace().Str("response", string(response)).Msg("parsing response from TM")
 	err := json.Unmarshal([]byte(response), &result)
+	Logger.Debug().Msgf("got %d servers from TM", len(result))
 	return result, err
 }
 
@@ -77,6 +79,7 @@ func filterCachesByMidType(tmStatus map[string]TMServerStatus) map[string]TMServ
 	tmCheckInterval, _ := strconv.ParseInt(os.Getenv("MHC_TM_CHECK_INTERVAL"), 10, 64)
 	hostList.Lock(int(tmCheckInterval) / 2)
 	for hostname, hostdata := range tmStatus {
+		Logger.Trace().Str("svc", "TMService").Str("tm_hostname", hostname).Str("type", hostdata.Type).Msg("checking TM response entry")
 		_, hostExists := hostList.Hosts[hostname]
 		if hostdata.Type == "MID" && hostExists {
 			Logger.Trace().Str("svc", "TMService").Str("hostname", hostname).Msg("host is of type MID and exists")

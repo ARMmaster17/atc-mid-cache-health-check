@@ -42,7 +42,7 @@ build-centos: build-image
 	mkdir artifacts || true
 	mv $(RPM) ./artifacts
 
-build-centos-exec-only: build-image
+build-centos-exec-only: build-image clean
 	docker run -w /src -v "$(PWD):/src" mid-health-check-svc bash -c "make build"
 	mkdir artifacts || true
 	mv $(EXEC_FILE) ./artifacts
