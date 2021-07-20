@@ -37,7 +37,7 @@ clean:
 build-image:
 	docker build -t mid-health-check-svc .
 
-build-centos: build-image
+build-centos: build-image clean
 	docker run -w /src -v "$(PWD):/src" mid-health-check-svc bash -c "make rpm"
 	mkdir artifacts || true
 	mv $(RPM) ./artifacts

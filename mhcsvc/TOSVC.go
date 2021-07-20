@@ -50,7 +50,7 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 			Logger.Trace().Str("to_hostname", *server.HostName).Msg("ignoring, not in hostList")
 			continue
 		}
-		updateCmd := ""                                                                                                                                                                                                                                                                                                                                                    
+		updateCmd := ""
 		Logger.Trace().Str("svc", "TOService").Str("status", *server.Status).Str("MANUAL", hostList.Hosts[*server.HostName].Manual).Msg("comparing server status")
 		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
 			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")

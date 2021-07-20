@@ -18,7 +18,7 @@ var (
 	apiPath         string
 
 	LogLevel    zerolog.Level
-	LogLocation = "/var/log/mid-health-check/mhc.log"
+	LogLocation = "/var/log/mhc.log"
 	Logger      zerolog.Logger
 
 	hostList HostList
