@@ -24,7 +24,7 @@ make build
 rm -rf $RPM_BUILD_ROOT
 install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 install -Dpm 0755 %{name}.conf %{buildroot}%{_sysconfdir}/%{name}/%{name}.conf
-touch /var/log/%{name}.log
+install -Dpm 0755 %{name}.log %{buildroot}/var/log/%{name}.log
 install -Dpm 644 %{name}.service %{buildroot}%{_unitdir}/%{name}.service
 
 
@@ -41,6 +41,7 @@ install -Dpm 644 %{name}.service %{buildroot}%{_unitdir}/%{name}.service
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
+%config(noreplace) /var/log/%{name}.log
 
 
 %changelog
