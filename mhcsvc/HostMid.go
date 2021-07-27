@@ -19,6 +19,8 @@ type HostMid struct {
 	Active     string
 	Local      string
 	SelfDetect string
+	TOUp       bool
+	TMUp       bool
 }
 
 // buildHostStatusStruct Takes a line from the output of traffic_ctl and converts it to a HostMid object.

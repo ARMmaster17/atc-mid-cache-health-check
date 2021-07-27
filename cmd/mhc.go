@@ -28,7 +28,7 @@ func initLogger() error {
 	if os.Getenv("MHC_USE_LOGFILE") == "TRUE" {
 		logFile, err := os.OpenFile(atc_mid_health_check.LogLocation, os.O_RDWR, 0644)
 		if err != nil {
-			log.Error().Err(err).Stack().Caller().Msgf("unable to open '%s'", atc_mid_health_check.LogLocation, err)
+			log.Error().Err(err).Stack().Caller().Msgf("unable to open '%s'", atc_mid_health_check.LogLocation)
 			atc_mid_health_check.Logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
 			return err
 		}
