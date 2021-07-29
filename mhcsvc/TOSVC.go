@@ -50,18 +50,15 @@ func getAdminDownMids(response tc.ServersV3Response) []string {
 			Logger.Trace().Str("to_hostname", *server.HostName).Msg("ignoring, not in hostList")
 			continue
 		}
-		updateCmd := ""
 		Logger.Trace().Str("svc", "TOService").Str("hostname", *server.HostName).Str("status", *server.Status).Str("MANUAL", hostList.Hosts[*server.HostName].Manual).Msg("comparing server status")
-		if *server.Status == "ADMIN_DOWN" && hostList.Hosts[*server.HostName].Manual != "DOWN" {
+		if *server.Status == "ADMIN_DOWN" {
 			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not DOWN, but TO reports server as ADMIN_DOWN")
-			updateCmd = fmt.Sprintf("host down %s.%s", *server.HostName, *server.DomainName)
-		} else if *server.Status == "REPORTED" && hostList.Hosts[*server.HostName].Manual != "UP" {
+			hostList.Hosts[*server.HostName].TOUp = "DOWN"
+		} else if *server.Status == "REPORTED" {
 			Logger.Debug().Str("svc", "TOService").Str("hostname", *server.HostName).Msg("manual is not UP, but TO reports server is not ADMIN_DOWN")
-			updateCmd = fmt.Sprintf("host up %s.%s", *server.HostName, *server.DomainName)
+			hostList.Hosts[*server.HostName].TOUp = "UP"
 		}
-		if updateCmd != "" {
-			updateCmds = append(updateCmds, updateCmd)
-		}
+		updateCmds = append(updateCmds, hostList.Hosts[*server.HostName].CalculateCommand())
 	}
 	return updateCmds
 }

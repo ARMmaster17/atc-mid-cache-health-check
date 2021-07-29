@@ -22,7 +22,7 @@ func Init(svcLogger zerolog.Logger) {
 // or an error if an error occurred. Function will block if it does not have
 func ExecuteTrafficCtlCommand(subCommand string, printOutput bool) (string, error) {
 	if subCommand == "" {
-		return "", fmt.Errorf("empty command, nothing to run")
+		return "", nil
 	}
 	Logger.Debug().Msg("obtaining lock on traffic_ctl executable...")
 	trafficControlMU.Lock()

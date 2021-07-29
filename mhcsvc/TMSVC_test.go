@@ -182,8 +182,8 @@ func Test_filterCachesByMidType(t *testing.T) {
 				result["testhost1"] = midData
 
 				hostList = HostList{}
-				hostList.Hosts = map[string]HostMid{}
-				hostList.Hosts["testhost1"] = HostMid{
+				hostList.Hosts = map[string]*HostMid{}
+				hostList.Hosts["testhost1"] = &HostMid{
 					Hostname:  "testhost1",
 					Type:      "MID",
 					Available: true,

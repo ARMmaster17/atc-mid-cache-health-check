@@ -3,7 +3,6 @@ package mhcsvc
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -11,8 +10,8 @@ import (
 )
 
 type TMServerStatus struct {
-	Type string `json:"type"`
-	Available bool `json:"combined_available"`
+	Type      string `json:"type"`
+	Available bool   `json:"combined_available"`
 }
 
 // CheckTMService Entry point for Traffic Monitor checks. Checks the current state of mid caches in HostList using
@@ -101,25 +100,16 @@ func checkForCacheStateChanges(tmStatus map[string]TMServerStatus) []string {
 	defer hostList.Unlock()
 	for hostname, hostdata := range tmStatus {
 		Logger.Trace().Str("svc", "TMService").Str("hostname", hostname).Str("hostdata", fmt.Sprint(hostdata)).Msg("processing host")
-		updateCmd := ""
 		Logger.Debug().Str("svc", "TMService").Str("hostname", hostname).Str("type", hostdata.Type).Msg("checking host type")
 		Logger.Debug().Str("svc", "TMService").Str("hostname", hostname).Bool("available", hostdata.Available).Msg("checking host availability")
 		if hostdata.Available {
 			Logger.Trace().Str("svc", "TMService").Str("hostname", hostname).Msg("host is available")
-			if hostList.Hosts[hostname].Manual != "UP" {
-				log.Info().Str("svc", "TMService").Str("hostname", hostname).Msgf("%s: Traffic Monitor reports UP, Manual override is %s, Host Status is %s\n", hostname, hostList.Hosts[hostname].Manual, hostList.Hosts[hostname].Status)
-				updateCmd = fmt.Sprintf("host up %s", hostList.Hosts[hostname].FQDN)
-			}
+			hostList.Hosts[hostname].TMUp = "UP"
 		} else {
 			Logger.Trace().Str("svc", "TMService").Str("hostname", hostname).Msg("host is not available")
-			if hostList.Hosts[hostname].Manual != "DOWN" {
-				log.Info().Str("svc", "TMService").Str("hostname", hostname).Msgf("%s: Traffic Monitor reports DOWN, Manual override is %s, Host Status is %s\n", hostname, hostList.Hosts[hostname].Manual, hostList.Hosts[hostname].Status)
-				updateCmd = fmt.Sprintf("host down %s", hostList.Hosts[hostname].FQDN)
-			}
+			hostList.Hosts[hostname].TMUp = "DOWN"
 		}
-		if updateCmd != "" {
-			updateCmds = append(updateCmds, updateCmd)
-		}
+		updateCmds = append(updateCmds, hostList.Hosts[hostname].CalculateCommand())
 	}
 	return updateCmds
 }

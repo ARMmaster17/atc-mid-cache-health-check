@@ -1,5 +1,5 @@
 NAME = mhc
-VERSION = 1.0
+VERSION = 1.1
 RPM = $(NAME)-$(VERSION)-1.el8.x86_64.rpm
 TAR = $(NAME)-$(VERSION).tar.gz
 EXEC_FILE = $(NAME)

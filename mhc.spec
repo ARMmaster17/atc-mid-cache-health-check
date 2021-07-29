@@ -1,5 +1,5 @@
 Name:           mhc
-Version:        1.0
+Version:        1.1
 Release:        1%{?dist}
 Summary:        Disables upstream mids in Traffic Server based on data from Apache Traffic Control.
 
