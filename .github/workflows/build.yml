@@ -24,7 +24,7 @@ jobs:
         run: make build-centos
 
       - name: Publish code coverage
-        uses: paambaati/codeclimate-action@v2.7.5
+        uses: paambaati/codeclimate-action@v3.0.0
         env:
           CC_TEST_REPORTER_ID: 8200b4a72cd17cd2ac8336dc82e9f132e6faa79215fe43a547c87d1674ad8e74
         with:
