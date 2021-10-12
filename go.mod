@@ -3,7 +3,7 @@ module atc-mid-health-check
 go 1.16
 
 require (
-	github.com/apache/trafficcontrol v5.1.2+incompatible
+	github.com/apache/trafficcontrol v5.1.3+incompatible
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/go-co-op/gocron v1.9.0
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
