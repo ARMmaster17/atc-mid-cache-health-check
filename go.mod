@@ -1,6 +1,6 @@
 module atc-mid-health-check
 
-go 1.16
+go 1.19
 
 require (
 	github.com/apache/trafficcontrol v5.1.3+incompatible
