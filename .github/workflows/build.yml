@@ -32,7 +32,7 @@ jobs:
           coverageLocations: ${{github.workspace}}/cover.out:gocov
 
       - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+        uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
           files: ./report.xml
